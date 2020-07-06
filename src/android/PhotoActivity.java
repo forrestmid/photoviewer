@@ -19,16 +19,18 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
-
 import uk.co.senab.photoview.PhotoViewAttacher;
 
 public class PhotoActivity extends Activity {
@@ -45,6 +47,8 @@ public class PhotoActivity extends Activity {
     private String mImage;
     private String mTitle;
     private boolean mShare;
+    private JSONObject mHeaders;
+    private JSONObject pOptions;
     private File mTempImage;
     private int shareBtnVisibility;
 
@@ -63,6 +67,16 @@ public class PhotoActivity extends Activity {
             this.mImage = mArgs.getString(0);
             this.mTitle = mArgs.getString(1);
             this.mShare = mArgs.getBoolean(2);
+            this.mHeaders = parseHeaders(mArgs.optString(5));
+            this.pOptions = mArgs.optJSONObject(6);
+
+            if( pOptions == null ) {
+                pOptions = new JSONObject();
+                pOptions.put("fit", true);
+                pOptions.put("centerInside", true);
+                pOptions.put("centerCrop", false);
+            }
+
             //Set the share button visibility
             shareBtnVisibility = this.mShare ? View.VISIBLE : View.INVISIBLE;
 
@@ -76,7 +90,11 @@ public class PhotoActivity extends Activity {
             titleTxt.setText(mTitle);
         }
 
-        loadImage();
+        try {
+            loadImage();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         // Set Button Listeners
         closeBtn.setOnClickListener(new View.OnClickListener() {
@@ -156,28 +174,40 @@ public class PhotoActivity extends Activity {
         mAttacher.update();
     }
 
+    private RequestCreator setOptions(RequestCreator picasso) throws JSONException {
+        if(this.pOptions.has("fit") && this.pOptions.optBoolean("fit")) {
+            picasso.fit();
+        }
+
+        if(this.pOptions.has("centerInside") && this.pOptions.optBoolean("centerInside")) {
+            picasso.centerInside();
+        }
+
+        if(this.pOptions.has("centerCrop") && this.pOptions.optBoolean("centerCrop")) {
+            picasso.centerCrop();
+        }
+
+        return picasso;
+    }
+
     /**
      * Load the image using Picasso
      */
-    private void loadImage() {
+    private void loadImage() throws JSONException {
         if (mImage.startsWith("http") || mImage.startsWith("file")) {
-            Picasso.with(this)
-                    .load(mImage)
-                    .fit()
-                    .centerInside()
-                    .into(photo, new com.squareup.picasso.Callback() {
-                        @Override
-                        public void onSuccess() {
-                            hideLoadingAndUpdate();
-                        }
+            this.setOptions(Picasso.get().load(mImage)).into(photo, new Callback() {
+                @Override
+                public void onSuccess() {
+                    hideLoadingAndUpdate();
+                }
 
-                        @Override
-                        public void onError() {
-                            Toast.makeText(getActivity(), "Error loading image.", Toast.LENGTH_LONG).show();
+                @Override
+                public void onError(Exception e) {
+                    Toast.makeText(getActivity(), "Error loading image.", Toast.LENGTH_LONG).show();
 
-                            finish();
-                        }
-                    });
+                    finish();
+                }
+            });
         } else if (mImage.startsWith("data:image")) {
 
             new AsyncTask<Void, Void, File>() {
@@ -189,23 +219,25 @@ public class PhotoActivity extends Activity {
 
                 protected void onPostExecute(File file) {
                     mTempImage = file;
-                    Picasso.with(PhotoActivity.this)
-                            .load(mTempImage)
-                            .fit()
-                            .centerCrop()
-                            .into(photo, new com.squareup.picasso.Callback() {
-                                @Override
-                                public void onSuccess() {
-                                    hideLoadingAndUpdate();
-                                }
 
-                                @Override
-                                public void onError() {
-                                    Toast.makeText(getActivity(), "Error loading image.", Toast.LENGTH_LONG).show();
+                    try {
+                        setOptions(Picasso.get().load(mTempImage))
+                                .into(photo, new Callback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        hideLoadingAndUpdate();
+                                    }
 
-                                    finish();
-                                }
-                            });
+                                    @Override
+                                    public void onError(Exception e) {
+                                        Toast.makeText(getActivity(), "Error loading image.", Toast.LENGTH_LONG).show();
+
+                                        finish();
+                                    }
+                                });
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
             }.execute();
 
@@ -274,4 +306,20 @@ public class PhotoActivity extends Activity {
         return file;
     }
 
+    private JSONObject parseHeaders(String headerString) {
+        JSONObject headers = null;
+
+        // Short circuit if headers is empty
+        if (headerString == null || headerString.length() == 0) {
+            return headers;
+        }
+
+        // headers should never be a JSON array, only a JSON object
+        try {
+            headers = new JSONObject(headerString);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return headers;
+    }
 }

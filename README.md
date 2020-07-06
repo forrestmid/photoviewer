@@ -29,12 +29,14 @@ $ npm install --save @ionic-native/photo-viewer
 PhotoViewer.show('http://my_site.com/my_image.jpg', 'Optional Title');
 ```
 
-Optionally you can pass third parameter option as object.
+You have to pass as third parameter the following options as object.
 
 Options:
-* share: Option is used to hide and show the share option.
-* closeBtn: Option for close button visibility when share false [ONLY FOR iOS]
-* copyToReference: If you need to copy image to reference before show then set it true [ONLY FOR iOS]
+* share: boolean - Option is used to hide and show the share option.
+* closeBtn: boolean - Option for close button visibility when share false [ONLY FOR iOS]
+* copyToReference: boolean - If you need to copy image to reference before show then set it true [ONLY FOR iOS]
+* headers: string - HTTP Headers [MUST BE PROVIDED]
+* picassoOptions: object - Options for picasso dependency [ONLY FOR ANDROID]
 
 ##### Usage
 
@@ -42,7 +44,9 @@ Options:
 var options = {
     share: true, // default is false
     closeButton: false, // default is true
-    copyToReference: true // default is false
+    copyToReference: true, // default is false
+    headers: '',  // If this is not provided, an exception will be triggered
+    piccasoOptions: { } // If this is not provided, an exception will be triggered
 };
 
 PhotoViewer.show('http://my_site.com/my_image.jpg', 'Optional Title', options);
@@ -86,3 +90,34 @@ PhotoViewer.show('http://my_site.com/my_image.jpg', 'Optional Title', options);
 (1.1.17)  
 - Additional options added for iOS
 - Fix share issue with SDK version 24 or above on Android
+
+(1.1.9)
+- Support for Headers
+- Enable or Disable Picasso Options ( Only Android ): fit, centerInside, centerCrop.
+
+(1.1.21)
+- Fix Typo in PhotoViewer.js
+- Fix Typo in PhotoActivity.java
+
+(1.1.22)
+- Ask always for permissions on Android.
+
+(1.2.0)
+- Adding TS files from next version to support TypeScript projects
+
+(1.2.1)
+- Native fixes on Android platform
+
+(1.2.2)
+- PRs: #164 #165 #167
+
+(1.2.3)
+- PRs: #179
+
+(1.2.4)
+- Removing Source Maps because of errors
+
+(1.2.5) 
+- Update Picasso Library to 2.71828
+- Fixed Picasso Bug
+- Thanks to @TdoubleG
