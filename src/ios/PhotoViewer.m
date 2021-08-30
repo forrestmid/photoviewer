@@ -139,7 +139,7 @@
     Boolean isFirebase = [image rangeOfString:@"firebase"].length > 0;
     NSString* webStringURL = image;
     if (!isFirebase) {
-      webStringURL = [image stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLFragmentAllowedCharacterSet]];
+      webStringURL = [NSURL URLWithString:image];
     }
     NSURL* fileURL = [NSURL URLWithString:webStringURL];
 
