@@ -136,18 +136,16 @@
 
 - (NSURL *)localFileURLForImage:(NSString *)image
 {
-    Boolean isFirebase = [image rangeOfString:@"firebase"].length > 0;
-    NSString* webStringURL = image;
-    if (!isFirebase) {
-      webStringURL = [NSURL URLWithString:image];
-    }
-    NSURL* fileURL = [NSURL URLWithString:webStringURL];
+    NSURL* fileURL = [NSURL URLWithString:image];
+
+    NSLog(@"FileURL = %@", image);
+    NSLog(@"FileURL = %@", fileURL);
 
     if (copyToReference && ![fileURL isFileReferenceURL]) {
         NSError* error = nil;
         NSData *data;
         if (headers && [headers count] > 0) {
-            data = [self imageDataFromURLWithHeaders:webStringURL];
+            data = [self imageDataFromURLWithHeaders:fileURL];
         } else {
             data = [NSData dataWithContentsOfURL:fileURL options:0 error:&error];
         }
